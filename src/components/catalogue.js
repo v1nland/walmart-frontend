@@ -1,16 +1,19 @@
 import React, { Component } from "react";
-import { Container, Row, Col, Form, Button } from "react-bootstrap";
+import { Card, Container, Row, Col, Form, Button } from "react-bootstrap";
 
 // api call
 import { getProducto } from "../api/getProducto";
 import { getProductos } from "../api/getProductos";
 
+// helper
+import { currencyFormat } from "../functions/helper"
+
 class Catalogue extends Component {
   constructor(context) {
     super(context);
 
-    this.searchById = this.searchById.bind(this)
-    this.searchByQuery = this.searchByQuery.bind(this)
+    this.searchById = this.searchById.bind(this);
+    this.searchByQuery = this.searchByQuery.bind(this);
 
     this.state = {
       catalogue: [],
@@ -47,14 +50,25 @@ class Catalogue extends Component {
     price,
     discount_price,
   }) => (
-    <Col key={id}>
-      <img
-        src={"https://" + image}
-        width="56px"
-        height="56px"
-        alt={description}
-      />
-      <p>{brand}</p> <p>{description}</p> <p>{price}</p> <p>{discount_price}</p>
+    <Col key={id} md={4}>
+      <Card style={{ width: "18rem" }}>
+        <Card.Img
+          variant="top"
+          src={"https://" + image}
+          width="286px"
+          height="180px"
+          alt={description}
+        />
+        <Card.Body>
+          <Card.Title>{brand}</Card.Title>
+          <Card.Text>
+            {description}
+          </Card.Text>
+          <Card.Text>
+            Precio: {currencyFormat(discount_price)} <s>{(discount_price !== price) && currencyFormat(price)}</s>
+          </Card.Text>
+        </Card.Body>
+      </Card>
     </Col>
   );
 
@@ -102,6 +116,8 @@ class Catalogue extends Component {
             </Col>
           </Row>
         </Container>
+
+        <hr />
 
         <Container>
           <Row>{catalogue.map(this.RenderCatalogueElement)}</Row>
