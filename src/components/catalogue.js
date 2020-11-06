@@ -1,129 +1,126 @@
+// react
 import React, { Component } from "react";
-import { Card, Container, Row, Col, Form, Button } from "react-bootstrap";
+import { Container, Row, Col, Form, Button } from "react-bootstrap";
 
 // api call
 import { getProducto } from "../api/getProducto";
 import { getProductos } from "../api/getProductos";
 
 // helper
-import { currencyFormat } from "../functions/helper"
+import { isParseable } from "../functions/helper";
+import { renderCatalogueElement } from "../functions/render";
 
 class Catalogue extends Component {
-  constructor(context) {
-    super(context);
+	constructor(context) {
+		super(context);
 
-    this.searchById = this.searchById.bind(this);
-    this.searchByQuery = this.searchByQuery.bind(this);
+		// bind search query
+		this.searchByQuery = this.searchByQuery.bind(this);
 
-    this.state = {
-      catalogue: [],
-    };
-  }
+		// api response actions
+		this.response_actions = {
+			true: (res) => {
+				res.json()
+					.then((body) => {
+						this.setState({ catalogue: body });
 
-  searchById(e) {
-    e.preventDefault();
-    const et = e.target;
+						if (body.length) {
+							this.setOutput("", false);
+						} else {
+							this.setOutput("No hay resultados", true);
+						}
+					})
+					.catch((e) => console.log(e));
+			},
+			false: (res) => {
+				this.setOutput("Error en la comunicación", true);
+			}
+		};
 
-    getProducto(et.id.value)
-      .then((res) => {
-        this.setState({ catalogue: [res] });
-      })
-      .catch((e) => console.log(e));
-  }
+		// current state
+		this.state = {
+			catalogue: [],
+			output: {
+				msg: "",
+				shouldRender: false
+			}
+		};
+	}
 
-  searchByQuery(e) {
-    e.preventDefault();
-    const et = e.target;
+	// helper to set output message
+	setOutput(msg, shouldRender) {
+		this.setState({ output: { msg: msg, shouldRender: shouldRender } });
+	}
 
-    getProductos({ query: et.query.value })
-      .then((res) => {
-        this.setState({ catalogue: res });
-      })
-      .catch((e) => console.log(e));
-  }
+	// get one product helper
+	getProductoCatalogue(id) {
+		getProducto(id)
+			.then((res) => {
+				this.response_actions[res.ok](res);
+			})
+			.catch((e) => console.log(e));
+	}
 
-  RenderCatalogueElement = ({
-    id,
-    brand,
-    description,
-    image,
-    price,
-    discount_price,
-  }) => (
-    <Col key={id} md={4}>
-      <Card style={{ width: "18rem" }}>
-        <Card.Img
-          variant="top"
-          src={"https://" + image}
-          width="286px"
-          height="180px"
-          alt={description}
-        />
-        <Card.Body>
-          <Card.Title>{brand}</Card.Title>
-          <Card.Text>
-            {description}
-          </Card.Text>
-          <Card.Text>
-            Precio: {currencyFormat(discount_price)} <s>{(discount_price !== price) && currencyFormat(price)}</s>
-          </Card.Text>
-        </Card.Body>
-      </Card>
-    </Col>
-  );
+	// get products helper
+	getProductosCatalogue(params) {
+		getProductos(params)
+			.then((res) => {
+				this.response_actions[res.ok](res);
+			})
+			.catch((e) => console.log(e));
+	}
 
-  render() {
-    const { catalogue } = this.state;
+	// form handler
+	searchByQuery(e) {
+		e.preventDefault();
+		const et = e.target;
 
-    return (
-      <>
-        <h1>Catalogo</h1>
+		if (isParseable(et.query.value)) {
+			this.getProductoCatalogue(parseInt(et.query.value));
+			return;
+		}
 
-        <Container>
-          <Row>
-            <Col>
-              <Form onSubmit={this.searchById}>
-                <Form.Group>
-                  <Form.Label>Buscar por ID</Form.Label>
-                  <Form.Control
-                    type="text"
-                    name="id"
-                    placeholder="Ingresa ID"
-                  />
-                </Form.Group>
+		if (et.query.value.length < 3) {
+			this.setOutput("Debe ingresar al menos 3 caracteres", true);
+		} else {
+			this.getProductosCatalogue({ query: et.query.value });
+		}
+	}
 
-                <Button variant="primary" type="submit">
-                  Buscar
-                </Button>
-              </Form>
-            </Col>
+	render() {
+		const { catalogue } = this.state;
+		const { output } = this.state;
 
-            <Col>
-              <Form onSubmit={this.searchByQuery}>
-                <Form.Group>
-                  <Form.Label>Buscar por marca/descripcion</Form.Label>
-                  <Form.Control
-                    type="text"
-                    name="query"
-                    placeholder="Ingresa marca o descripcion"
-                  />
-                </Form.Group>
+		return (
+			<>
+				<h1>Catálogo</h1>
 
-                <Button variant="primary" type="submit">
-                  Buscar
-                </Button>
-              </Form>
-            </Col>
-          </Row>
-        </Container>
+				<Container>
+					<Row>
+						<Col>
+							<Form onSubmit={this.searchByQuery}>
+								<Form.Group>
+									<Form.Label>Buscador</Form.Label>
+									<Form.Control type="text" name="query" placeholder="Ingresa ID, marca o descripción" />
+								</Form.Group>
 
-        <hr />
+								<Button variant="primary" type="submit">
+									Buscar
+								</Button>
+							</Form>
+						</Col>
+					</Row>
+				</Container>
 
-        <Container>
-          <Row>{catalogue.map(this.RenderCatalogueElement)}</Row>
-        </Container>
-      </>
-    );
-  }
+				<hr />
+
+				<Container>
+					<h5>{output.shouldRender ? output.msg : ""}</h5>
+
+					<Row>{output.shouldRender ? "" : catalogue.map(renderCatalogueElement)}</Row>
+				</Container>
+			</>
+		);
+	}
 }
 export default Catalogue;
