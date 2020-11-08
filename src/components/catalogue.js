@@ -101,10 +101,10 @@ class Catalogue extends Component {
 							<Form onSubmit={this.searchByQuery}>
 								<Form.Group>
 									<Form.Label>Buscador</Form.Label>
-									<Form.Control type="text" name="query" placeholder="Ingresa ID, marca o descripción" />
+									<Form.Control className="cy-query-input" type="text" name="query" placeholder="Ingresa ID, marca o descripción" />
 								</Form.Group>
 
-								<Button variant="primary" type="submit">
+								<Button className="cy-button-search" variant="primary" type="submit">
 									Buscar
 								</Button>
 							</Form>
@@ -115,7 +115,7 @@ class Catalogue extends Component {
 				<hr />
 
 				<Container>
-					<h5>{output.shouldRender ? output.msg : ""}</h5>
+					<h5 className="cy-output-msg">{output.shouldRender ? output.msg : ""}</h5>
 
 					<Row>{output.shouldRender ? "" : catalogue.map(renderCatalogueElement)}</Row>
 				</Container>
